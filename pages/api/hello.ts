@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { ensureSession } from 'utils/server/firebase_auth';
+import { ensureSession } from 'lib/server/firebase_auth';
 
 type Data = {
   name: string;

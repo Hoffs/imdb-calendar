@@ -1,6 +1,6 @@
 import { auth } from 'firebase-admin';
 import { NextApiRequest } from 'next';
-import firebase from 'utils/server/firestore';
+import firebase from 'lib/server/firestore';
 
 export const validateAuth = async (
   req: NextApiRequest

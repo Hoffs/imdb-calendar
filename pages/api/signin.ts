@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import firebase from 'utils/server/firestore';
+import firebase from 'lib/server/firestore';
 import { serialize } from 'cookie';
 
 type Error = {

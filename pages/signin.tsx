@@ -2,8 +2,8 @@ import { GetServerSideProps } from 'next';
 import tw from 'twin.macro';
 import Layout from 'components/Layout';
 import { useState } from 'react';
-import { useSignInUsingEmail } from 'utils/client/auth';
-import { ensureSession } from 'utils/server/firebase_auth';
+import { useSignInUsingEmail } from 'lib/client/auth';
+import { ensureSession } from 'lib/server/firebase_auth';
 
 export default function SignIn(): JSX.Element {
   const [err, setErr] = useState<string | undefined>();

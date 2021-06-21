@@ -5,7 +5,7 @@ import {
   useContext,
   PropsWithChildren,
 } from 'react';
-import firebase from 'utils/client/firebase';
+import firebase from 'lib/client/firebase';
 import Router from 'next/router';
 
 export const UserContext = createContext<Context>({});

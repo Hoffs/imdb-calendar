@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import firebase from 'utils/client/firebase';
+import firebase from 'lib/client/firebase';
 
 async function singInUsingEmail(email: string): Promise<string | undefined> {
   const actionCodeSettings = {

@@ -15,7 +15,7 @@ if (!admin.apps.length) {
  */
 
 // Import or define your types
-import { User, ImdbList } from 'utils/server/types';
+import { User, ImdbList } from 'lib/server/types';
 
 const converter = <T>() => ({
   toFirestore: (data: Partial<T>) => data,
