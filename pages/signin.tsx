@@ -1,8 +1,9 @@
-import tw, { styled } from 'twin.macro';
-import firebase from 'utils/client/firebase';
+import { GetServerSideProps } from 'next';
+import tw from 'twin.macro';
 import Layout from 'components/Layout';
 import { useState } from 'react';
 import { useSignInUsingEmail } from 'utils/client/auth';
+import { ensureSession } from 'utils/server/firebase_auth';
 
 export default function SignIn(): JSX.Element {
   const [err, setErr] = useState<string | undefined>();
@@ -66,4 +67,15 @@ export default function SignIn(): JSX.Element {
   );
 }
 
-//TODO: Check if already signed-in server side.
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  if (await ensureSession(context.req)) {
+    return {
+      redirect: {
+        destination: '/home',
+        statusCode: 302,
+      },
+    };
+  }
+
+  return { props: {} };
+};

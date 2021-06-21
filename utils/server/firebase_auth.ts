@@ -17,3 +17,24 @@ export const validateAuth = async (
 
   return undefined;
 };
+
+type Request = {
+  cookies: {
+    [key: string]: string;
+  };
+};
+
+export const ensureSession = async (
+  req: Request
+): Promise<firebase.auth.DecodedIdToken | undefined> => {
+  const cookie = req.cookies['firebase-cookie'];
+  if (cookie) {
+    try {
+      return await firebase.auth().verifySessionCookie(cookie);
+    } catch (e) {
+      return undefined;
+    }
+  }
+
+  return Promise.resolve(undefined);
+};

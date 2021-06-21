@@ -43,7 +43,7 @@ export const useSignInUsingEmail = (): [
   // useEffect to wait for client to load
   useEffect(() => {
     if (firebase.auth().isSignInWithEmailLink(window.location.href)) {
-      var email = window.localStorage.getItem('emailForSignIn');
+      let email = window.localStorage.getItem('emailForSignIn');
       window.localStorage.removeItem('emailForSignIn');
       if (!email) {
         email = window.prompt('Please provide your email for confirmation');
@@ -63,8 +63,7 @@ export const useSignInUsingEmail = (): [
           })
           .then(signInLocally)
           .then(() => router.push('/home'))
-          .catch((error) => {
-            console.debug(error);
+          .catch(() => {
             setInProgress(false);
           })
           .finally(() => {

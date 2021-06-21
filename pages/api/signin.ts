@@ -1,5 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { validateAuth } from 'utils/server/firebase_auth';
 import firebase from 'utils/server/firestore';
 import { serialize } from 'cookie';
 
@@ -12,7 +11,7 @@ const EXPIRES = 7 * 24 * 60 * 60 * 1000;
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Error>
-) {
+): Promise<void> {
   const idToken = req.headers['x-firebase-id'];
   if (idToken && !Array.isArray(idToken)) {
     try {
@@ -20,14 +19,15 @@ export default async function handler(
         .auth()
         .createSessionCookie(idToken, { expiresIn: EXPIRES });
 
-      const options = {
-        maxAge: EXPIRES,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-      };
       res.setHeader(
         'Set-Cookie',
-        serialize('x-firebase-cookie', cookie, options)
+        serialize('firebase-cookie', cookie, {
+          maxAge: EXPIRES / 1000,
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          path: '/',
+        })
       );
       res.status(200).end();
     } catch (error) {

@@ -1,4 +1,3 @@
-import tw, { styled } from 'twin.macro';
 import Layout from 'components/Layout';
 import Link from 'next/link';
 

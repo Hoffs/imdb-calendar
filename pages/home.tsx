@@ -1,9 +1,5 @@
-import tw, { styled } from 'twin.macro';
-import firebase from 'utils/client/firebase';
 import { useUser } from 'context/userContext';
 import Layout from 'components/Layout';
-
-// const Header = styled.div(tw`font-mono text-sm text-gray-800`);
 
 export default function Home(): JSX.Element {
   const user = useUser();
