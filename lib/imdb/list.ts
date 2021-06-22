@@ -1,11 +1,14 @@
+export const listUrl = (id: string): string =>
+  `https://www.imdb.com/list/${id}`;
+export const watchlistUrl = (id: string): string =>
+  `https://www.imdb.com/user/${id}/watchlist`;
+
 export const isValidList = async (id: string): Promise<boolean> => {
-  const url = `https://www.imdb.com/list/${id}`;
-  return isValid(url);
+  return isValid(listUrl(id));
 };
 
 export const isValidWatchlist = async (id: string): Promise<boolean> => {
-  const url = `https://www.imdb.com/user/${id}/watchlist`;
-  return isValid(url);
+  return isValid(watchlistUrl(id));
 };
 
 const isValid = async (url: string): Promise<boolean> => {

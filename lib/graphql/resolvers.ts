@@ -55,6 +55,7 @@ const Query = {
               id: encodeImdbListId(id),
               name: data.name,
               url: data.url,
+              imdb_id: id,
               is_watchlist: data.is_watchlist,
               last_updated: data.last_updated,
             };
@@ -74,7 +75,7 @@ const Query = {
 };
 
 const reWatchlist = /^https:\/\/www.imdb.com\/user\/(?<id>.*)\/watchlist$/;
-const reList = /^https:\/\/www.imdb.com\/list\/(?<id>.*)\/$/;
+const reList = /^https:\/\/www.imdb.com\/list\/(?<id>.*)\/?$/;
 
 const Mutation = {
   async addList(

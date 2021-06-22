@@ -2,6 +2,8 @@ import Layout from 'components/Layout';
 import { useApollo } from 'lib/client/graphql';
 import { ApolloProvider, gql, useQuery } from '@apollo/client';
 import { ImdbList } from 'lib/graphql/types';
+import { ListItem } from 'components/ListItem';
+import { ListInputBox } from 'components/ListInputBox';
 
 const ListsQuery = gql`
   query Lists {
@@ -9,6 +11,7 @@ const ListsQuery = gql`
       id
       name
       url
+      imdb_id
       is_watchlist
       last_updated
     }
@@ -34,23 +37,23 @@ function Home(): JSX.Element {
 
   return (
     <Layout>
-      <main>
-        <div tw="text-2xl">IMDB Calendar</div>
-        <div tw="text-xl">Your Lists</div>
+      <main tw="max-w-lg">
+        <div tw="text-2xl mb-4">IMDB Calendar</div>
+        <span tw="flex flex-row justify-between mb-2">
+          <div tw="text-xl">Your Lists</div>
+          <div tw="text-xl">{q.data?.lists.length}/10</div>
+        </span>
 
-        <ul>
-          {q.data?.lists.map((x) => (
-            <li key={x.id}>
-              {x.id} / {x.name}
-            </li>
-          ))}
-        </ul>
+        <ListInputBox />
+
+        {q.data?.lists.map((x) => (
+          <ListItem key={x.id} data={x} />
+        ))}
       </main>
     </Layout>
   );
 }
 
-// export default function Wrapped(e: PropsWithChildren<Record<string, unknown>>): JSX.Element {
 export default function Wrapped(): JSX.Element {
   const apolloClient = useApollo();
   return (

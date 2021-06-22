@@ -79,7 +79,7 @@ export const removeListForUser = async (
 ): Promise<void> => {
   const userRef = users.doc(email);
   await userRef.update({
-    imdbLists: admin.firestore.FieldValue.arrayRemove(listId),
+    imdb_lists: admin.firestore.FieldValue.arrayRemove(listId),
   });
 };
 
