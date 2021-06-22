@@ -10,11 +10,11 @@ let apolloClient: ApolloClient<NormalizedCacheObject>;
 
 function createIsomorphLink(): HttpLink {
   if (typeof window === 'undefined') {
-    throw new Error('Unsupported for non browser use');
+    // throw new Error('Unsupported for non browser use');
     // dont think I need this
-    // const { SchemaLink } = require('@apollo/client/link/schema');
-    // const { schema } = require('../../pages/api/graphql');
-    // return new SchemaLink({ schema });
+    const { SchemaLink } = require('@apollo/client/link/schema');
+    const { schema } = require('../../pages/api/graphql');
+    return new SchemaLink({ schema });
   } else {
     const { HttpLink } = require('@apollo/client/link/http');
     return new HttpLink({

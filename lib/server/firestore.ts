@@ -60,7 +60,7 @@ export const addListForUser = async (
 
   const userRef = users.doc(email);
   batch.update(userRef, {
-    imdbLists: admin.firestore.FieldValue.arrayUnion(listId),
+    imdb_lists: admin.firestore.FieldValue.arrayUnion(listId),
   });
 
   const listRef = imdbLists.doc(listId);

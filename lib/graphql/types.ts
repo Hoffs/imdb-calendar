@@ -2,6 +2,7 @@ export interface ImdbList {
   id: string;
   name?: string;
   url?: string;
+  imdb_id: string;
   is_watchlist: boolean;
   last_updated?: Date;
 }

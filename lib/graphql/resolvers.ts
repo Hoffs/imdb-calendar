@@ -116,6 +116,7 @@ const Mutation = {
           id: Buffer.from(`ImdbList_${id}`).toString('base64'),
           name: list.name,
           url: list.url,
+          imdb_id: id,
           is_watchlist: list.is_watchlist,
           last_updated: list.last_updated,
         },

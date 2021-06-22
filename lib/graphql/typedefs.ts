@@ -32,6 +32,7 @@ export const typeDefs = gql`
     id: ID!
     name: String
     url: String
+    imdb_id: String!
     is_watchlist: Boolean!
     last_updated: Date
   }
