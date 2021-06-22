@@ -29,6 +29,7 @@ export default async function handler(
           path: '/',
         })
       );
+
       res.status(200).end();
     } catch (error) {
       res.status(401).json({ error });

@@ -1,11 +1,13 @@
 export interface User {
-  name: string;
-  calendar_refresh_token: string;
   imdb_lists: string[];
 }
 
 export interface ImdbList {
-  name: string;
-  last_updated: Date;
+  // id doesn't exist on the firebase type, but is rather a key
+  name?: string;
+  is_watchlist: boolean;
+  last_updated?: Date;
+  removed: boolean; // whether it should be cleaned up. has to make sure that no other users track it.
+  url?: string;
   tmdb_ids: string[];
 }

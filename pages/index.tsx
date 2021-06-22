@@ -29,7 +29,7 @@ export default function Home(): JSX.Element {
       </div>
 
       <span tw="py-2 px-4 border-2 border-blue-800 rounded uppercase">
-        <Link href="/signin.html">Sign in to continue!</Link>
+        <Link href="/signin">Sign in to continue!</Link>
       </span>
     </Layout>
   );
