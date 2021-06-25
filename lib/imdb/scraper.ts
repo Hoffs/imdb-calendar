@@ -78,7 +78,7 @@ function parseWatchlist(pageText: string): {
   name: string;
   item_ids: string[];
 } {
-  // source of watchlist pages contain 'IMDbReactInitialState.push({})' that has all the information about the titles
+  // source of watchlist pages contain 'IMDbReactInitialState.push({});' that has all the information about the titles
   // in the watchlist. Even though the watchlist might be paginated, this seems to still have information of all entries.
   // So the idea is to find 'IMDbReactInitialState.push', take substring from that until ';' and parse out ids.
   //"list":
@@ -88,12 +88,12 @@ function parseWatchlist(pageText: string): {
 
   let pos = pageText.indexOf(watchlistLookup, 0);
   while (pos !== -1) {
-    const openParens = pageText.indexOf('(', pos);
+    const openParens = pageText.indexOf('({', pos);
     if (openParens !== -1) {
-      const closeParens = pageText.indexOf(')', pos);
+      const closeParens = pageText.indexOf('});', pos);
       if (closeParens !== -1) {
         const content = JSON.parse(
-          pageText.substring(openParens + 1, closeParens)
+          pageText.substring(openParens + 1, closeParens + 1)
         );
         if (content?.list && Array.isArray(content.list.items)) {
           name = content.list.name;

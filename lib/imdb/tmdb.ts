@@ -37,18 +37,24 @@ export async function updateTmdbIds(list: ImdbList): Promise<void> {
   }
 }
 
-export function getDetails(id: string): Promise<CalendarEntry[]> {
+export function getDetails(
+  id: string,
+  imdbId: string
+): Promise<CalendarEntry[]> {
   const [type, tmdb_id] = id.split(':', 2);
   if (type === 'movie') {
-    return getMovieDetails(tmdb_id);
+    return getMovieDetails(tmdb_id, imdbId);
   } else if (type === 'tv') {
-    return getTvDetails(tmdb_id);
+    return getTvDetails(tmdb_id, imdbId);
   }
 
   throw new Error(`Invalid ID received: ${id}`);
 }
 
-async function getMovieDetails(id: string): Promise<CalendarEntry[]> {
+async function getMovieDetails(
+  id: string,
+  imdbId: string
+): Promise<CalendarEntry[]> {
   const r = await fetch(`${API}/movie/${id}`, HEADERS);
 
   if (!r.ok) {
@@ -65,21 +71,21 @@ async function getMovieDetails(id: string): Promise<CalendarEntry[]> {
 
   const summary = json.title || 'N/A';
   const description = json.overview || '';
-  const url = json.imdb_id
-    ? `https://www.imdb.com/title/${json.imdb_id}/`
-    : undefined;
 
   return [
     {
       summary,
       description,
-      url,
+      url: `https://www.imdb.com/title/${imdbId}/`,
       date: new Date(json.release_date),
     },
   ];
 }
 
-async function getTvDetails(id: string): Promise<CalendarEntry[]> {
+async function getTvDetails(
+  id: string,
+  imdbId: string
+): Promise<CalendarEntry[]> {
   const r = await fetch(`${API}/tv/${id}`, HEADERS);
 
   if (!r.ok) {
@@ -89,6 +95,7 @@ async function getTvDetails(id: string): Promise<CalendarEntry[]> {
 
   const tvJson = await r.json();
   const tvSeasons = tvJson.seasons;
+  const tvName = typeof tvJson.name === 'string' ? tvJson.name : '';
 
   if (!tvSeasons || !Array.isArray(tvSeasons)) {
     return [];
@@ -102,7 +109,12 @@ async function getTvDetails(id: string): Promise<CalendarEntry[]> {
       continue;
     }
 
-    const seasonEps = await getTvSeasonDetails(id, seasonNumber);
+    const seasonEps = await getTvSeasonDetails(
+      id,
+      seasonNumber,
+      tvName,
+      imdbId
+    );
     entries.push(...seasonEps);
   }
 
@@ -111,7 +123,9 @@ async function getTvDetails(id: string): Promise<CalendarEntry[]> {
 
 async function getTvSeasonDetails(
   id: string,
-  seasonNumber: number
+  seasonNumber: number,
+  tvName: string,
+  imdbId: string
 ): Promise<CalendarEntry[]> {
   const r = await fetch(`${API}/tv/${id}/season/${seasonNumber}`, HEADERS);
 
@@ -133,12 +147,13 @@ async function getTvSeasonDetails(
       continue;
     }
 
-    const summary = ep.name || 'N/A';
+    const summary = `[${tvName}] ${ep.name || 'N/A'}`;
     const description = ep.overview || '';
 
     entries.push({
       summary,
       description,
+      url: `https://www.imdb.com/title/${imdbId}/episodes?season=${seasonNumber}`,
       date: new Date(ep.air_date),
     });
   }

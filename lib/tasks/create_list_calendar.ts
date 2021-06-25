@@ -37,7 +37,7 @@ export async function createListCalendar(
       continue;
     }
 
-    const idEntries = await getDetails(tmdbId);
+    const idEntries = await getDetails(tmdbId, id);
     entries.push(...idEntries);
   }
 

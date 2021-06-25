@@ -12,7 +12,19 @@ export function buildCalendar(name: string, events: CalendarEntry[]): string {
 
   for (const e of events) {
     e.date.setUTCHours(12);
-    cal.createEvent({ ...e, allDay: true, start: e.date });
+    // Google Calendar does not support URL field.
+
+    if (e.url) {
+      e.description ??= '';
+      e.description += ` ( ${e.url} )`;
+    }
+
+    cal.createEvent({
+      ...e,
+      description: e.description,
+      allDay: true,
+      start: e.date,
+    });
   }
 
   return cal.toString();
