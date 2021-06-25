@@ -14,6 +14,7 @@ import {
   RemoveListPayload,
 } from 'lib/graphql/types';
 import { dateScalar } from './date';
+import { createListCalendar } from 'lib/tasks/create_list_calendar';
 
 interface GqlContext {
   user: firebase.auth.DecodedIdToken & { email: string }; // email is checked to exist in gql context middleware
@@ -83,6 +84,7 @@ const Mutation = {
     { input }: { input: { url: string } },
     context: GqlContext
   ): Promise<AddListPayload> {
+    // TODO: Add restriction for 10 lists per user.
     const { url } = input;
     const clean = url.trim().split('?', 1)[0];
 
@@ -111,6 +113,9 @@ const Mutation = {
       if (!list) {
         throw new Error('Failed to create or get list');
       }
+
+      // TODO: Move this out + scheduled runs.
+      await createListCalendar(id, list);
 
       return {
         list: {

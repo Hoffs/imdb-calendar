@@ -9,5 +9,7 @@ export interface ImdbList {
   last_updated?: Date;
   removed: boolean; // whether it should be cleaned up. has to make sure that no other users track it.
   url?: string;
-  tmdb_ids: string[];
+  item_ids: {
+    [imdb_id: string]: string;
+  };
 }
