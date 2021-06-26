@@ -1,14 +1,16 @@
 import admin from 'firebase-admin';
 
 if (!admin.apps.length) {
+  let privateKey = process.env.FIREBASE_SVC_PRIVATE_KEY;
+  if (privateKey) {
+    privateKey = privateKey.replaceAll(/\\n/g, '\n');
+  }
+
   admin.initializeApp({
     credential: admin.credential.cert({
       projectId: process.env.FIREBASE_SVC_PROJECT_ID,
       clientEmail: process.env.FIREBASE_SVC_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_SVC_PRIVATE_KEY?.replaceAll(
-        /\\n/g,
-        '\n'
-      ),
+      privateKey: privateKey,
     }),
     databaseURL: process.env.FIREBASE_DATABASE_URL,
     storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
