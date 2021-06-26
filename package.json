@@ -52,6 +52,7 @@
     "babel-jest": "^27.0.2",
     "babel-plugin-twin": "1.0.2",
     "eslint": "^7.19.0",
+    "eslint-config-next": "^11.0.1",
     "eslint-config-prettier": "^7.2.0",
     "eslint-plugin-react": "^7.19.0",
     "husky": "^4.2.3",

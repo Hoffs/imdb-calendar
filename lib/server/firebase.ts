@@ -1,10 +1,15 @@
 import admin from 'firebase-admin';
 
-const serviceAccount = require('../../firebase-adminsdk.json');
-
 if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_SVC_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_SVC_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_SVC_PRIVATE_KEY?.replaceAll(
+        /\\n/g,
+        '\n'
+      ),
+    }),
     databaseURL: process.env.FIREBASE_DATABASE_URL,
     storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
   });
@@ -67,7 +72,6 @@ export const addImdbListToUser = async (
 
   const listRef = imdbLists.doc(listId);
   batch.set(listRef, {
-    removed: false,
     is_watchlist: isWatchlist,
     item_ids: {},
     users: [],
