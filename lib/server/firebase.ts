@@ -3,7 +3,7 @@ import admin from 'firebase-admin';
 if (!admin.apps.length) {
   let privateKey = process.env.FIREBASE_SVC_PRIVATE_KEY;
   if (privateKey) {
-    privateKey = privateKey.replaceAll(/\\n/g, '\n');
+    privateKey = privateKey.replace(/\\n/g, '\n');
   }
 
   admin.initializeApp({

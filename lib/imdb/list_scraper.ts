@@ -25,7 +25,7 @@ function parseList(pageText: string): { name: string; item_ids: string[] } {
           // "url": "/title/tt0469021/"
           const url = e.url;
           if (url && typeof url === 'string') {
-            const id = url.replaceAll(/title|\//g, '');
+            const id = url.replace(/title|\//g, '');
             ids.push(id);
           }
         }
