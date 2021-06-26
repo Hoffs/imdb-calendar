@@ -59,6 +59,16 @@ FIREBASE_SVC_CLIENT_EMAIL=
 FIREBASE_SVC_PRIVATE_KEY=
 ```
 
+## Building
+
+Building/deployment is done using Dockerfile. Since built site will have some constants configured it has to be done before deployment and (image) can't be publically deployed/hosted.
+
+To help with build args `buildargs.sh` is provided.
+
+```sh
+docker build -t imdb-calendar:1.0 $(sh buildargs.sh .env.local)
+```
+
 ## Nice to have
 
 Would be nice to add some external logging service, e.g. [Logflare](https://logflare.app/).
