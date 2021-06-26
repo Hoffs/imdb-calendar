@@ -53,6 +53,7 @@ export default function SignIn(): JSX.Element {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           type="email"
+          placeholder={'you@example.com'}
           onKeyPress={(e) => e.key === 'Enter' && handleSignIn()}
         ></input>
         <button

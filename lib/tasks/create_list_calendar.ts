@@ -1,32 +1,26 @@
-// Scrape IMDB List,
-// Update Firestore
-// Fetch TMDB Id's for the list
-// Update Firestore
-// Fetch TMDB items and create calendar
-//
-
-import { scrapeList } from 'lib/imdb/scraper';
+import Scraper from 'lib/imdb/scraper';
 import { ImdbList } from 'lib/server/types';
-import firebase, { imdbLists } from 'lib/server/firestore';
+import firebase, { updateImdbList } from 'lib/server/firebase';
 import { getDetails, updateTmdbIds } from 'lib/imdb/tmdb';
 import { buildCalendar } from 'lib/calendar/builder';
 
-export async function createListCalendar(
+export async function createCalendar(
   id: string,
   list: ImdbList
 ): Promise<void> {
-  const { name, item_ids } = await scrapeList(id, list);
+  const { name, item_ids } = await Scraper.scrape(id, list);
 
   list.name = name;
   list.item_ids = item_ids;
 
-  await imdbLists.doc(id).update({
+  await updateImdbList(id, {
     name: list.name,
     item_ids: list.item_ids,
   });
 
   await updateTmdbIds(list);
-  await imdbLists.doc(id).update({
+
+  await updateImdbList(id, {
     item_ids: list.item_ids,
   });
 
@@ -55,7 +49,7 @@ export async function createListCalendar(
 
   list.url = file.publicUrl();
 
-  await imdbLists.doc(id).update({
+  await updateImdbList(id, {
     url: list.url,
   });
 }

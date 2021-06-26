@@ -1,11 +1,10 @@
-import { isValidList, isValidWatchlist } from 'lib/imdb/list';
+import ImdbListValidator from 'lib/imdb/list_validator';
 import firebase, {
-  users,
-  imdbLists,
-  addListForUser,
-  getList,
-  removeListForUser,
-} from 'lib/server/firestore';
+  addImdbListToUser,
+  getImdbList,
+  removeListFromUser,
+  getUser,
+} from 'lib/server/firebase';
 import {
   AddListPayload,
   decodeImdbListId,
@@ -14,7 +13,6 @@ import {
   RemoveListPayload,
 } from 'lib/graphql/types';
 import { dateScalar } from './date';
-import { createListCalendar } from 'lib/tasks/create_list_calendar';
 
 interface GqlContext {
   user: firebase.auth.DecodedIdToken & { email: string }; // email is checked to exist in gql context middleware
@@ -27,41 +25,20 @@ const Query = {
     context: GqlContext
   ): Promise<ImdbList[]> {
     const email = context.user.email;
-    if (!email) {
-      return [];
-    }
+    const user = await getUser(email);
 
-    const user = await users.doc(email).get();
-    if (!user) {
-      return [];
-    }
-
-    const userData = user.data();
-    if (!userData) {
-      return [];
-    }
-
-    const promises = userData.imdb_lists.map(
+    const promises = user.imdb_lists.map(
       async (id): Promise<ImdbList | undefined> => {
-        return imdbLists
-          .doc(id)
-          .get()
-          .then((doc) => {
-            const data = doc.data();
-            if (!data) {
-              return undefined;
-            }
+        const list = await getImdbList(id);
+        if (!list) {
+          return undefined;
+        }
 
-            return {
-              id: encodeImdbListId(id),
-              name: data.name,
-              url: data.url,
-              imdb_id: id,
-              is_watchlist: data.is_watchlist,
-              last_updated: data.last_updated,
-            };
-          })
-          .catch(() => undefined);
+        return {
+          ...list,
+          id: encodeImdbListId(id),
+          imdb_id: id,
+        };
       }
     );
 
@@ -75,61 +52,50 @@ const Query = {
   },
 };
 
-const reWatchlist = /^https:\/\/www.imdb.com\/user\/(?<id>.*)\/watchlist$/;
-const reList = /^https:\/\/www.imdb.com\/list\/(?<id>.*)\/?$/;
-
 const Mutation = {
   async addList(
     _parent: unknown,
     { input }: { input: { url: string } },
     context: GqlContext
   ): Promise<AddListPayload> {
-    // TODO: Add restriction for 10 lists per user.
     const { url } = input;
-    const clean = url.trim().split('?', 1)[0];
 
-    const watchlistMatch = clean.match(reWatchlist);
-    const listMatch = clean.match(reList);
-    const [id, isWatchlist] = watchlistMatch?.groups?.id
-      ? [watchlistMatch.groups.id, true]
-      : [listMatch?.groups?.id, false];
-
-    if (id) {
-      let list = await getList(id);
-      if (!list) {
-        // Calling IMDB is kinda expensive so only do it if theres not entry.
-        if (isWatchlist && !(await isValidWatchlist(id))) {
-          throw new Error('Watchlist is private or invalid');
-        } else if (!isWatchlist && !(await isValidList(id))) {
-          throw new Error('List is private or invalid');
-        }
-      }
-
-      await addListForUser(context.user.email, id, isWatchlist);
-
-      // dont refetch if we got it first time
-      list = list || (await getList(id));
-
-      if (!list) {
-        throw new Error('Failed to create or get list');
-      }
-
-      // TODO: Move this out + scheduled runs.
-      await createListCalendar(id, list);
-
-      return {
-        list: {
-          id: Buffer.from(`ImdbList_${id}`).toString('base64'),
-          name: list.name,
-          url: list.url,
-          imdb_id: id,
-          is_watchlist: list.is_watchlist,
-          last_updated: list.last_updated,
-        },
-      };
+    const user = await getUser(context.user.email);
+    if (user.imdb_lists.length >= 10) {
+      throw new Error('You already have 10 playlists');
     }
 
-    throw new Error('URL is of invalid format');
+    const urlValidator = new ImdbListValidator(url);
+
+    const [isValid, id, isWatchlist] = urlValidator.parse();
+    if (!isValid) {
+      throw new Error('URL is not a valid IMDB watchlist or list');
+    }
+
+    let list = await getImdbList(id);
+    if (!list) {
+      const [isValid, error] = await urlValidator.validate();
+      if (!isValid) {
+        throw new Error(error);
+      }
+    }
+
+    await addImdbListToUser(context.user.email, id, isWatchlist);
+
+    // dont refetch if we got it first time
+    list = list || (await getImdbList(id));
+
+    if (!list) {
+      throw new Error('Failed to create or get list');
+    }
+
+    return {
+      list: {
+        ...list,
+        id: encodeImdbListId(id),
+        imdb_id: id,
+      },
+    };
   },
 
   async removeList(
@@ -142,7 +108,7 @@ const Mutation = {
       throw new Error('Invalid ID');
     }
 
-    await removeListForUser(context.user.email, decoded);
+    await removeListFromUser(context.user.email, decoded);
     return {
       id: input.id,
     };

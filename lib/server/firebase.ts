@@ -27,35 +27,36 @@ const converter = <T>() => ({
 const dataPoint = <T>(collectionPath: string) =>
   admin.firestore().collection(collectionPath).withConverter(converter<T>());
 
-export const users = dataPoint<User>('users');
-export const imdbLists = dataPoint<ImdbList>('imdb_lists');
+const users = dataPoint<User>('users');
+const imdbLists = dataPoint<ImdbList>('imdb_lists');
 
-export const ensureUser = async (email: string): Promise<User> => {
-  const user = await getUser(email);
+// Gets User or creates if it does not exist.
+export const getUser = async (email: string): Promise<User> => {
+  const user = await getUserRaw(email);
   if (user) {
     return user;
   }
 
   await users.doc(email).set({ imdb_lists: [] });
-  const newUser = await getUser(email);
+  const newUser = await getUserRaw(email);
   if (newUser) {
     return newUser;
   }
 
-  throw new Error('Failed to get or create user');
+  throw new Error('Failed to get or create User');
 };
 
-const getUser = async (email: string): Promise<User | undefined> => {
+const getUserRaw = async (email: string): Promise<User | undefined> => {
   const user = await users.doc(email).get();
   return user.data();
 };
 
-export const addListForUser = async (
+export const addImdbListToUser = async (
   email: string,
   listId: string,
   isWatchlist: boolean
 ): Promise<void> => {
-  await ensureUser(email);
+  await getUser(email);
 
   const batch = admin.firestore().batch();
 
@@ -69,26 +70,69 @@ export const addListForUser = async (
     removed: false,
     is_watchlist: isWatchlist,
     item_ids: {},
+    users: [],
+  });
+
+  batch.update(listRef, {
+    users: admin.firestore.FieldValue.arrayUnion(email),
   });
 
   await batch.commit();
 };
 
-export const removeListForUser = async (
+export const removeListFromUser = async (
   email: string,
   listId: string
 ): Promise<void> => {
+  const batch = admin.firestore().batch();
+
   const userRef = users.doc(email);
-  await userRef.update({
+  batch.update(userRef, {
     imdb_lists: admin.firestore.FieldValue.arrayRemove(listId),
   });
+
+  const listRef = imdbLists.doc(listId);
+  batch.update(listRef, {
+    users: admin.firestore.FieldValue.arrayRemove(email),
+  });
+
+  await batch.commit();
 };
 
-export const getList = async (
+export const getImdbList = async (
   listId: string
 ): Promise<ImdbList | undefined> => {
   const list = await imdbLists.doc(listId).get();
   return list.data();
 };
+
+type UpdatePayload = {
+  name?: string;
+  item_ids?: {
+    [imdb_id: string]: string;
+  };
+  url?: string;
+};
+
+export const updateImdbList = async (
+  listId: string,
+  payload: UpdatePayload
+): Promise<void> => {
+  await imdbLists.doc(listId).update(payload);
+};
+
+export async function* getImdbLists(): AsyncGenerator<
+  [string, FirebaseFirestore.Timestamp, ImdbList],
+  void,
+  unknown
+> {
+  const snap = await imdbLists.get();
+  for (const d of snap.docs) {
+    if (d.exists) {
+      const data = d.data();
+      yield [d.id, d.updateTime, data];
+    }
+  }
+}
 
 export default admin;

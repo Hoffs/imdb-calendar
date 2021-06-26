@@ -12,4 +12,5 @@ export interface ImdbList {
   item_ids: {
     [imdb_id: string]: string;
   };
+  users: string[];
 }

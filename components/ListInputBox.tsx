@@ -77,7 +77,7 @@ export function ListInputBox(): JSX.Element {
         <button
           onClick={addToList}
           disabled={mutation.loading}
-          tw="self-center disabled:opacity-50 disabled:cursor-default py-2 px-4 border-2 border-blue-800 bg-blue-50 rounded uppercase"
+          tw="self-center disabled:opacity-50 disabled:cursor-default py-2 px-4 border-2 border-blue-800 text-blue-800 bg-blue-50 rounded uppercase font-semibold hover:border-blue-600 hover:text-blue-600"
         >
           Add
         </button>

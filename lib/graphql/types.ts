@@ -1,3 +1,4 @@
+// GraphQL version of ImdbList
 export interface ImdbList {
   id: string;
   name?: string;
@@ -29,7 +30,6 @@ export const encodeImdbListId = (id: string): string =>
   Buffer.from(`${ImdbListPrefix}${id}`).toString('base64');
 
 export const decodeImdbListId = (id: string): string | undefined => {
-  Buffer.from(`ImdbList_${id}`).toString('base64');
   const decoded = Buffer.from(id, 'base64').toString('ascii');
   if (!decoded.startsWith(ImdbListPrefix)) {
     return undefined;

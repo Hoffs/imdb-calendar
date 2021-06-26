@@ -6,7 +6,7 @@ export default function Home(): JSX.Element {
     <Layout>
       <div tw="text-2xl">IMDB Calendar</div>
 
-      <div tw="flex flex-col gap-2 py-2 px-4 border rounded border-gray-400 max-w-md">
+      <div tw="shadow flex flex-col gap-2 py-2 px-4 border rounded border-gray-400 max-w-md">
         <span>
           Create iCal-based calendars from your IMDB lists. Never miss upcoming
           movie or tv show release.

@@ -38,7 +38,11 @@ function Home(): JSX.Element {
   return (
     <Layout>
       <main tw="max-w-lg">
-        <div tw="text-2xl mb-4">IMDB Calendar</div>
+        <div tw="text-2xl">IMDB Calendar</div>
+        <div tw="text-sm">Add iCal link to your calendar program</div>
+        <div tw="text-sm mb-4">
+          Contents of the iCal will update every ~24 hours
+        </div>
         <span tw="flex flex-row justify-between mb-2">
           <div tw="text-xl">Your Lists</div>
           <div tw="text-xl">{q.data?.lists.length}/10</div>

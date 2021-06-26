@@ -1,6 +1,6 @@
 import { gql, useMutation } from '@apollo/client';
 import { ImdbList, RemoveListPayload } from 'lib/graphql/types';
-import { listUrl, watchlistUrl } from 'lib/imdb/list';
+import LinkUtils from 'lib/imdb/link_utils';
 
 const RemoveListMutation = gql`
   mutation RemoveList($id: ID!) {
@@ -31,25 +31,42 @@ export function ListItem({ data }: { data: ImdbList }): JSX.Element {
     },
   });
 
-  const url = data.is_watchlist
-    ? watchlistUrl(data.imdb_id)
-    : listUrl(data.imdb_id);
+  const imdbUrl = LinkUtils.getUrl(data.imdb_id, data.is_watchlist);
 
   return (
     <div
       key={data.id}
-      tw="w-full flex flex-row justify-between border border-gray-400 rounded-b p-4 mt-4 mb-4 gap-8"
+      tw="shadow w-full flex flex-row justify-between border border-gray-400 rounded-b p-4 mt-4 mb-4 gap-8"
     >
       <span tw="h-full flex flex-col gap-2 overflow-x-hidden break-all">
-        <span>{data.name}</span>
-        <span>Link: {url}</span>
-        <span>Calendar Link: {data.url}</span>
+        <span tw="flex flex-row gap-2 items-end text-lg leading-5 font-semibold">
+          <span tw="uppercase text-xs leading-snug font-normal">Name</span>
+          {data.name || 'Not Updated'}
+        </span>
+        <span tw="flex flex-row gap-2 items-end text-xs leading-5">
+          <span tw="uppercase text-xs leading-snug min-w-min">IMDB</span>
+          <a
+            href={imdbUrl}
+            tw="flex-shrink break-all text-purple-800 hover:text-purple-500"
+          >
+            {imdbUrl}
+          </a>
+        </span>
+        <span tw="flex flex-row gap-2 items-end text-xs leading-5">
+          <span tw="flex-none uppercase text-xs leading-snug">iCal</span>
+          <a
+            href={data.url}
+            tw="flex-1 break-all text-purple-800 hover:text-purple-500"
+          >
+            {data.url}
+          </a>
+        </span>
       </span>
 
       <button
         onClick={() => removeList().catch(console.error)}
         disabled={mutation.loading}
-        tw="disabled:opacity-50 disabled:cursor-default px-4 border-2 border-red-600 rounded uppercase text-red-600 bg-red-50"
+        tw="disabled:opacity-50 disabled:cursor-default px-4 border-2 border-red-600 rounded uppercase text-red-600 bg-red-50 font-semibold hover:border-red-400 hover:text-red-400"
       >
         Remove
       </button>
