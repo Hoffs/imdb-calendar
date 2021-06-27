@@ -66,7 +66,9 @@ Building/deployment is done using Dockerfile. Since built site will have some co
 To help with build args `buildargs.sh` is provided.
 
 ```sh
-docker build -t imdb-calendar:1.0 $(sh buildargs.sh .env.local)
+sh buildargs.sh .env.local
+# copy command output
+docker build -t imdb-calendar:1.0 {paste command output}
 ```
 
 ## Nice to have

@@ -27,14 +27,20 @@ export default async function handler(
     return;
   }
 
+  let task: Promise<unknown> | undefined;
   switch (taskName) {
     case 'UPDATE':
-      await updateCalendars();
+      task = updateCalendars();
       break;
     default:
-      res.status(400).json({ error: 'Invalid task name' });
-      return;
+      task = undefined;
+      break;
   }
 
-  res.status(200).end();
+  if (task) {
+    res.status(202).end();
+    await task;
+  } else {
+    res.status(400).json({ error: 'Invalid task name' });
+  }
 }
