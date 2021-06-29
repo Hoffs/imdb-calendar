@@ -1,5 +1,6 @@
 import { ImdbList } from 'lib/server/types';
 import { CalendarEntry } from 'lib/calendar/builder';
+import { CtxLogger } from 'lib/server/logger';
 
 const API = 'https://api.themoviedb.org/3';
 const HEADERS = {
@@ -9,7 +10,10 @@ const HEADERS = {
   },
 };
 
-export async function updateTmdbIds(list: ImdbList): Promise<void> {
+export async function updateTmdbIds(
+  list: ImdbList,
+  logger: CtxLogger
+): Promise<void> {
   const toCheck = Object.keys(list.item_ids).filter((id) => !list.item_ids[id]);
   for (const id of toCheck) {
     if (!id) {
@@ -22,7 +26,11 @@ export async function updateTmdbIds(list: ImdbList): Promise<void> {
     );
 
     if (!r.ok) {
-      // NOTE: Unsure, maybe throw instead?
+      const text = await r.text();
+      logger.errorCtx(
+        { status_code: r.status.toString(), url: r.url, response_text: text },
+        'failed to retrieve TMDB find response'
+      );
       continue;
     }
 
@@ -39,13 +47,14 @@ export async function updateTmdbIds(list: ImdbList): Promise<void> {
 
 export function getDetails(
   id: string,
-  imdbId: string
+  imdbId: string,
+  logger: CtxLogger
 ): Promise<CalendarEntry[]> {
   const [type, tmdb_id] = id.split(':', 2);
   if (type === 'movie') {
-    return getMovieDetails(tmdb_id, imdbId);
+    return getMovieDetails(tmdb_id, imdbId, logger);
   } else if (type === 'tv') {
-    return getTvDetails(tmdb_id, imdbId);
+    return getTvDetails(tmdb_id, imdbId, logger);
   }
 
   throw new Error(`Invalid ID received: ${id}`);
@@ -53,19 +62,23 @@ export function getDetails(
 
 async function getMovieDetails(
   id: string,
-  imdbId: string
+  imdbId: string,
+  logger: CtxLogger
 ): Promise<CalendarEntry[]> {
   const r = await fetch(`${API}/movie/${id}`, HEADERS);
 
   if (!r.ok) {
-    // NOTE: Should throw?
+    const text = await r.text();
+    logger.errorCtx(
+      { status_code: r.status.toString(), url: r.url, response_text: text },
+      'failed to retrieve TMDB movie details'
+    );
     return [];
   }
 
   const json = await r.json();
 
   if (!json.release_date) {
-    // If theres no release date - skip.
     return [];
   }
 
@@ -84,12 +97,17 @@ async function getMovieDetails(
 
 async function getTvDetails(
   id: string,
-  imdbId: string
+  imdbId: string,
+  logger: CtxLogger
 ): Promise<CalendarEntry[]> {
   const r = await fetch(`${API}/tv/${id}`, HEADERS);
 
   if (!r.ok) {
-    // NOTE: Should throw?
+    const text = await r.text();
+    logger.errorCtx(
+      { status_code: r.status.toString(), url: r.url, response_text: text },
+      'failed to retrieve TMDB movie details'
+    );
     return [];
   }
 
@@ -98,6 +116,10 @@ async function getTvDetails(
   const tvName = typeof tvJson.name === 'string' ? tvJson.name : '';
 
   if (!tvSeasons || !Array.isArray(tvSeasons)) {
+    logger.errorCtx(
+      { url: r.url, response_json: tvJson },
+      'received TMDB tv JSON without seasons'
+    );
     return [];
   }
 
@@ -106,6 +128,10 @@ async function getTvDetails(
   for (const s of tvSeasons) {
     const seasonNumber = s.season_number;
     if (typeof seasonNumber !== 'number') {
+      logger.errorCtx(
+        { url: r.url, response_json: tvJson },
+        'received TMDB tv JSON without season number'
+      );
       continue;
     }
 
@@ -113,7 +139,8 @@ async function getTvDetails(
       id,
       seasonNumber,
       tvName,
-      imdbId
+      imdbId,
+      logger
     );
     entries.push(...seasonEps);
   }
@@ -125,25 +152,33 @@ async function getTvSeasonDetails(
   id: string,
   seasonNumber: number,
   tvName: string,
-  imdbId: string
+  imdbId: string,
+  logger: CtxLogger
 ): Promise<CalendarEntry[]> {
   const r = await fetch(`${API}/tv/${id}/season/${seasonNumber}`, HEADERS);
 
   if (!r.ok) {
-    // NOTE: Should throw?
+    const text = await r.text();
+    logger.errorCtx(
+      { status_code: r.status.toString(), url: r.url, response_text: text },
+      'failed to retrieve TMDB movie details'
+    );
     return [];
   }
 
   const json = await r.json();
   const eps = json.episodes;
   if (!eps || !Array.isArray(eps)) {
+    logger.errorCtx(
+      { url: r.url, response_json: json },
+      'received TMDB tv season JSON without episodes'
+    );
     return [];
   }
 
   const entries = [];
   for (const ep of eps) {
     if (!ep.air_date) {
-      // If theres no release date - skip.
       continue;
     }
 

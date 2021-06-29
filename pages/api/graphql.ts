@@ -1,7 +1,8 @@
 import { ApolloServer, makeExecutableSchema } from 'apollo-server-micro';
 import { typeDefs } from 'lib/graphql/typedefs';
-import resolvers from 'lib/graphql/resolvers';
+import resolvers, { GqlContext } from 'lib/graphql/resolvers';
 import { ensureSession } from 'lib/server/firebase_auth';
+import { CtxLogger } from 'lib/server/logger';
 
 export const schema = makeExecutableSchema({ typeDefs, resolvers });
 
@@ -13,18 +14,21 @@ export const config = {
 
 export default new ApolloServer({
   schema,
-  context: async ({ req }) => {
+  context: async ({ req }): Promise<GqlContext> => {
     if (req?.cookies && typeof req?.cookies === 'object') {
       const user = await ensureSession(req);
       if (!user) {
         throw new Error('Not authorized');
       }
 
-      if (!user.email) {
+      if (typeof user.email === 'undefined') {
         throw new Error('No email');
       }
 
-      return { user };
+      return {
+        user: { uid: user.uid, email: user.email },
+        logger: new CtxLogger(),
+      };
     } else {
       throw new Error('Not authorized');
     }

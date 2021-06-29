@@ -1,7 +1,7 @@
 import LinkUtils from './link_utils';
 
-const reWatchlist = /^https:\/\/www.imdb.com\/user\/(?<id>.*)\/watchlist$/;
-const reList = /^https:\/\/www.imdb.com\/list\/(?<id>.*)\/?$/;
+const reWatchlist = /^https:\/\/www.imdb.com\/user\/(?<id>\w*)\/watchlist$/;
+const reList = /^https:\/\/www.imdb.com\/list\/(?<id>\w*)\/?$/;
 
 type ParsedUrl = [isValid: boolean, id: string, isWatchlist: boolean];
 

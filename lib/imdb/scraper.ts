@@ -2,6 +2,7 @@ import { ImdbList } from 'lib/server/types';
 import LinkUtils from './link_utils';
 import ListScraper from 'lib/imdb/list_scraper';
 import WatchlistScraper from 'lib/imdb/watchlist_scraper';
+import { CtxLogger } from 'lib/server/logger';
 
 type ParsedList = {
   name: string;
@@ -10,11 +11,20 @@ type ParsedList = {
   };
 };
 
-async function scrape(id: string, list: ImdbList): Promise<ParsedList> {
+async function scrape(
+  id: string,
+  list: ImdbList,
+  logger: CtxLogger
+): Promise<ParsedList> {
   const url = LinkUtils.getUrl(id, list.is_watchlist);
 
   const r = await fetch(url);
   if (!r.ok) {
+    const text = await r.text();
+    logger.errorCtx(
+      { status_code: r.status.toString(), url, response_text: text },
+      'failed to retrieve page'
+    );
     throw new Error(`Failed to get page ${url}`);
   }
 

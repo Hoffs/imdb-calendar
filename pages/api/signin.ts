@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import firebase from 'lib/server/firebase';
 import { serialize } from 'cookie';
+import { CtxLogger, updateStore, withCtx } from 'lib/server/logger';
 
 type Error = {
   error: string;
@@ -8,10 +9,13 @@ type Error = {
 
 const EXPIRES = 7 * 24 * 60 * 60 * 1000;
 
-export default async function handler(
+async function handler(
+  logger: CtxLogger,
   req: NextApiRequest,
   res: NextApiResponse<Error>
 ): Promise<void> {
+  updateStore({ initiator: '/api/signin' });
+  logger.info('received signin request');
   const idToken = req.headers['x-firebase-id'];
   if (idToken && !Array.isArray(idToken)) {
     try {
@@ -32,11 +36,15 @@ export default async function handler(
 
       res.status(200).end();
     } catch (error) {
+      logger.errorCtx({ err: error }, 'failed to create session cookie');
       res.status(401).json({ error });
     }
 
     return;
   }
 
-  res.status(401).json({ error: 'Missing firebase token ID' });
+  logger.info('sign in reqest does not contain Firebase token ID');
+  res.status(401).json({ error: 'Missing Firebase token ID' });
 }
+
+export default withCtx(handler);
