@@ -1,15 +1,13 @@
 import bunyan from 'bunyan';
 import { LoggingBunyan } from '@google-cloud/logging-bunyan';
-import assert from 'assert';
 import { AsyncLocalStorage } from 'async_hooks';
 import uniqid from 'uniqid';
 import { UserError } from 'lib/graphql/user_error';
-import { NextApiRequest, NextApiResponse } from 'next';
+import { GetServerSideProps, NextApiRequest, NextApiResponse } from 'next';
 import { GqlContext } from 'lib/graphql/resolvers';
 
 let loggerInstance: bunyan | undefined;
-
-function initLogger(): void {
+function initLogger(): bunyan {
   let privateKey = process.env.FIREBASE_SVC_PRIVATE_KEY;
   if (privateKey) {
     privateKey = privateKey.replace(/\\n/g, '\n');
@@ -30,16 +28,27 @@ function initLogger(): void {
       loggingBunyan.stream('info'),
     ],
   });
+
+  return loggerInstance;
 }
 
 export function logger(): bunyan {
   if (!loggerInstance) {
-    initLogger();
-    assert.ok(loggerInstance, 'logger was undefined after init');
-    return loggerInstance;
+    return initLogger();
   }
 
   return loggerInstance;
+}
+
+let ctxLoggerInstance: CtxLogger | undefined;
+export function ctxLogger(): CtxLogger {
+  if (!ctxLoggerInstance) {
+    const baseLogger = initLogger();
+    ctxLoggerInstance = new CtxLogger(baseLogger);
+    return ctxLoggerInstance;
+  }
+
+  return ctxLoggerInstance;
 }
 
 export type LogCtx = RootCtx & {
@@ -155,7 +164,7 @@ type NextApiFn<T> = (
 
 export function withCtx<T>(handler: NextApiExtendedFn<T>): NextApiFn<T> {
   return (req: NextApiRequest, res: NextApiResponse<T>): Promise<void> => {
-    const log = new CtxLogger(logger());
+    const log = ctxLogger();
 
     return runWithCtx(log, newStoreCtx(), async () => {
       try {
@@ -195,4 +204,27 @@ export function withCtxGql<TIn, TOut>(
   Object.defineProperty(wrapped, 'name', { value: name });
 
   return wrapped;
+}
+
+// Middleware for Next.js Page
+export function withCtxPage(fn: GetServerSideProps): GetServerSideProps {
+  return (context) => {
+    const log = ctxLogger();
+
+    return runWithCtx(
+      log,
+      newStoreCtx({ url: context.resolvedUrl }),
+      async () => {
+        try {
+          return await fn(context);
+        } catch (err) {
+          if (!(err instanceof UserError)) {
+            log.errorCtx({ err: err }, err.message);
+          }
+
+          throw err;
+        }
+      }
+    );
+  };
 }

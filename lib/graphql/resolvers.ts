@@ -1,10 +1,5 @@
 import ImdbListValidator from 'lib/imdb/list_validator';
-import {
-  addImdbListToUser,
-  getImdbList,
-  removeListFromUser,
-  getUser,
-} from 'lib/server/firebase';
+import { FirebaseDb } from 'lib/server/firebase';
 import {
   AddListPayload,
   decodeImdbListId,
@@ -20,20 +15,21 @@ import assert from 'assert';
 export interface GqlContext {
   user: { uid: string; email: string }; // email is checked to exist in gql context middleware
   logger: CtxLogger;
+  db: FirebaseDb;
 }
 
 const QueryImpl = {
   async lists(
     _parent: unknown,
     _args: unknown,
-    { user: { email }, logger }: GqlContext
+    { user: { email }, logger, db }: GqlContext
   ): Promise<ImdbList[]> {
     logger.info(`getting user lists`);
-    const user = await getUser(email);
+    const user = await db.getUser(email);
 
     const promises = user.imdb_lists.map(
       async (id): Promise<ImdbList | undefined> => {
-        const list = await getImdbList(id);
+        const list = await db.getImdbList(id);
         if (!list) {
           return undefined;
         }
@@ -60,13 +56,13 @@ const MutationImpl = {
   async addList(
     _parent: unknown,
     { input }: { input: { url: string } },
-    { user: { email }, logger }: GqlContext
+    { user: { email }, logger, db }: GqlContext
   ): Promise<AddListPayload> {
     updateStore({ list_url: input.url });
     logger.info(`adding list to user`);
     const { url } = input;
 
-    const user = await getUser(email);
+    const user = await db.getUser(email);
     if (user.imdb_lists.length >= 10) {
       logger.info(`user already has 10 lists`);
       throw new UserError('You already have 10 playlists');
@@ -82,7 +78,7 @@ const MutationImpl = {
 
     updateStore({ list_id: id });
 
-    let list = await getImdbList(id);
+    let list = await db.getImdbList(id);
     if (!list) {
       const [isValid, error] = await urlValidator.validate();
       if (!isValid) {
@@ -92,10 +88,10 @@ const MutationImpl = {
       }
     }
 
-    await addImdbListToUser(email, id, isWatchlist);
+    await db.addImdbListToUser(email, id, isWatchlist);
 
     // dont refetch if we got it first time
-    list = list || (await getImdbList(id));
+    list = list || (await db.getImdbList(id));
 
     if (!list) {
       throw new Error('Failed to create or get list');
@@ -114,7 +110,7 @@ const MutationImpl = {
   async removeList(
     _parent: unknown,
     { input }: { input: { id: string } },
-    { user: { email }, logger }: GqlContext
+    { user: { email }, logger, db }: GqlContext
   ): Promise<RemoveListPayload> {
     logger.info(`removing list from user`);
 
@@ -126,7 +122,7 @@ const MutationImpl = {
 
     updateStore({ list_id: decoded });
 
-    await removeListFromUser(email, decoded);
+    await db.removeListFromUser(email, decoded);
 
     logger.info(`removed list from user`);
     return {

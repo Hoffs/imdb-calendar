@@ -3,6 +3,7 @@ import { typeDefs } from 'lib/graphql/typedefs';
 import resolvers, { GqlContext } from 'lib/graphql/resolvers';
 import { ensureSession } from 'lib/server/firebase_auth';
 import { CtxLogger } from 'lib/server/logger';
+import { FirebaseDb } from 'lib/server/firebase';
 
 export const schema = makeExecutableSchema({ typeDefs, resolvers });
 
@@ -28,6 +29,7 @@ export default new ApolloServer({
       return {
         user: { uid: user.uid, email: user.email },
         logger: new CtxLogger(),
+        db: new FirebaseDb(),
       };
     } else {
       throw new Error('Not authorized');

@@ -4,6 +4,7 @@ import Layout from 'components/Layout';
 import { useState } from 'react';
 import { useSignInUsingEmail } from 'lib/client/auth';
 import { ensureSession } from 'lib/server/firebase_auth';
+import { withCtxPage } from 'lib/server/logger';
 
 export default function SignIn(): JSX.Element {
   const [err, setErr] = useState<string | undefined>();
@@ -68,15 +69,17 @@ export default function SignIn(): JSX.Element {
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  if (await ensureSession(context.req)) {
-    return {
-      redirect: {
-        destination: '/home',
-        statusCode: 302,
-      },
-    };
-  }
+export const getServerSideProps: GetServerSideProps = withCtxPage(
+  async (context) => {
+    if (await ensureSession(context.req)) {
+      return {
+        redirect: {
+          destination: '/home',
+          statusCode: 302,
+        },
+      };
+    }
 
-  return { props: {} };
-};
+    return { props: {} };
+  }
+);

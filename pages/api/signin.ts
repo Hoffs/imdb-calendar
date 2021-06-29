@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import firebase from 'lib/server/firebase';
+import { auth } from 'lib/server/firebase';
 import { serialize } from 'cookie';
 import { CtxLogger, updateStore, withCtx } from 'lib/server/logger';
 
@@ -19,9 +19,9 @@ async function handler(
   const idToken = req.headers['x-firebase-id'];
   if (idToken && !Array.isArray(idToken)) {
     try {
-      const cookie = await firebase
-        .auth()
-        .createSessionCookie(idToken, { expiresIn: EXPIRES });
+      const cookie = await auth().createSessionCookie(idToken, {
+        expiresIn: EXPIRES,
+      });
 
       res.setHeader(
         'Set-Cookie',

@@ -1,6 +1,6 @@
 import Scraper from 'lib/imdb/scraper';
 import { ImdbList } from 'lib/server/types';
-import firebase, { updateImdbList } from 'lib/server/firebase';
+import { FirebaseDb } from 'lib/server/firebase';
 import { getDetails, updateTmdbIds } from 'lib/imdb/tmdb';
 import { buildCalendar } from 'lib/calendar/builder';
 import { CtxLogger } from 'lib/server/logger';
@@ -8,7 +8,8 @@ import { CtxLogger } from 'lib/server/logger';
 export async function updateCalendar(
   id: string,
   list: ImdbList,
-  logger: CtxLogger
+  logger: CtxLogger,
+  db: FirebaseDb
 ): Promise<void> {
   logger.info('updating calendar');
   const { name, item_ids } = await Scraper.scrape(id, list, logger);
@@ -16,14 +17,14 @@ export async function updateCalendar(
   list.name = name;
   list.item_ids = item_ids;
 
-  await updateImdbList(id, {
+  await db.updateImdbList(id, {
     name: list.name,
     item_ids: list.item_ids,
   });
 
   await updateTmdbIds(list, logger);
 
-  await updateImdbList(id, {
+  await db.updateImdbList(id, {
     item_ids: list.item_ids,
   });
 
@@ -47,7 +48,7 @@ export async function updateCalendar(
 
   logger.info('storing calendar to bucket');
 
-  const file = firebase.storage().bucket().file(id);
+  const file = db.storage.bucket().file(id);
   await file.save(cal, {
     contentType: 'text/calendar',
     public: true,
@@ -59,7 +60,7 @@ export async function updateCalendar(
 
   list.url = file.publicUrl();
 
-  await updateImdbList(id, {
+  await db.updateImdbList(id, {
     url: list.url,
   });
 
