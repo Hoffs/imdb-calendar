@@ -5,6 +5,7 @@ import { AsyncLocalStorage } from 'async_hooks';
 import uniqid from 'uniqid';
 import { UserError } from 'lib/graphql/user_error';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { GqlContext } from 'lib/graphql/resolvers';
 
 let loggerInstance: bunyan | undefined;
 
@@ -168,4 +169,30 @@ export function withCtx<T>(handler: NextApiExtendedFn<T>): NextApiFn<T> {
       }
     });
   };
+}
+
+// Middleware for Graphql
+type GraphqlFn<TIn, TOut> = (
+  _parent: unknown,
+  input: TIn,
+  gqlCtx: GqlContext
+) => Promise<TOut>;
+
+export function withCtxGql<TIn, TOut>(
+  name: string,
+  handler: GraphqlFn<TIn, TOut>
+): GraphqlFn<TIn, TOut> {
+  const wrapped: GraphqlFn<TIn, TOut> = (p, input, gqlCtx) => {
+    return runWithCtx(
+      gqlCtx.logger,
+      newStoreCtx({ initiator: `graphql#${name}`, uid: gqlCtx.user.uid }),
+      async () => {
+        return await handler(p, input, gqlCtx);
+      }
+    );
+  };
+
+  Object.defineProperty(wrapped, 'name', { value: name });
+
+  return wrapped;
 }
