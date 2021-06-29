@@ -16,9 +16,6 @@ COPY . .
 COPY --from=deps /app/node_modules ./node_modules
 
 # These are required during build process (SVC could be removed if admin wasnt initalized as global/singleton I imagine)
-ARG FIREBASE_SVC_PROJECT_ID
-ARG FIREBASE_SVC_CLIENT_EMAIL
-ARG FIREBASE_SVC_PRIVATE_KEY
 ARG NEXT_PUBLIC_FIREBASE_APP_ID
 ARG NEXT_PUBLIC_FIREBASE_PROJECT_ID
 ARG NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
