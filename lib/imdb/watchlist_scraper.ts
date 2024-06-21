@@ -13,7 +13,7 @@ function parseWatchlist(pageText: string): {
       const closeParens = pageText.indexOf('});', pos);
       if (closeParens !== -1) {
         const content = JSON.parse(
-          pageText.substring(openParens + 1, closeParens + 1)
+          pageText.substring(openParens + 1, closeParens + 1),
         );
         if (content?.list && Array.isArray(content.list.items)) {
           const name = content.list.name;

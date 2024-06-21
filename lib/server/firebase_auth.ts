@@ -3,13 +3,13 @@ import { auth } from 'lib/server/firebase';
 import { ctxLogger } from './logger';
 
 type Request = {
-  cookies: {
+  cookies: Partial<{
     [key: string]: string;
-  };
+  }>;
 };
 
 export const ensureSession = async (
-  req: Request
+  req: Request,
 ): Promise<fb.auth.DecodedIdToken | undefined> => {
   const cookie = req.cookies['firebase-cookie'];
   if (cookie) {

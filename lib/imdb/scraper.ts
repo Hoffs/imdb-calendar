@@ -14,7 +14,7 @@ type ParsedList = {
 async function scrape(
   id: string,
   list: ImdbList,
-  logger: CtxLogger
+  logger: CtxLogger,
 ): Promise<ParsedList> {
   const url = LinkUtils.getUrl(id, list.is_watchlist);
 
@@ -23,7 +23,7 @@ async function scrape(
     const text = await r.text();
     logger.errorCtx(
       { status_code: r.status.toString(), url, response_text: text },
-      'failed to retrieve page'
+      'failed to retrieve page',
     );
     throw new Error(`Failed to get page ${url}`);
   }

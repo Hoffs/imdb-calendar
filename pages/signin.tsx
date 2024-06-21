@@ -81,5 +81,5 @@ export const getServerSideProps: GetServerSideProps = withCtxPage(
     }
 
     return { props: {} };
-  }
+  },
 );

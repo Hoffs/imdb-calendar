@@ -9,7 +9,7 @@ export async function updateCalendar(
   id: string,
   list: ImdbList,
   logger: CtxLogger,
-  db: FirebaseDb
+  db: FirebaseDb,
 ): Promise<void> {
   logger.info('updating calendar');
   const { name, item_ids } = await Scraper.scrape(id, list, logger);
@@ -41,7 +41,7 @@ export async function updateCalendar(
 
   logger.infoCtx(
     { entries_count: entries.length.toString() },
-    'creating calendar'
+    'creating calendar',
   );
 
   const cal = buildCalendar(list.name, entries);

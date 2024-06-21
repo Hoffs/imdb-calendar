@@ -9,7 +9,7 @@ type Error = {
 async function handler(
   logger: CtxLogger,
   req: NextApiRequest,
-  res: NextApiResponse<Error>
+  res: NextApiResponse<Error>,
 ): Promise<void> {
   updateStore({ initiator: '/api/tasks' });
   const token = req.headers['x-task-token'];
@@ -30,7 +30,7 @@ async function handler(
   if (!taskName || typeof taskName !== 'string') {
     logger.infoCtx(
       { task_name: String(taskName) },
-      'sign in reqest contains incorrect task name'
+      'sign in reqest contains incorrect task name',
     );
     res.status(400).json({ error: 'Invalid or missing task name' });
     return;

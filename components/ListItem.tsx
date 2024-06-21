@@ -1,6 +1,7 @@
-import { gql, useMutation } from '@apollo/client';
+import { Reference, gql, useMutation } from '@apollo/client';
 import { ImdbList, RemoveListPayload } from 'lib/graphql/types';
 import LinkUtils from 'lib/imdb/link_utils';
+import React from 'react';
 
 const RemoveListMutation = gql`
   mutation RemoveList($id: ID!) {
@@ -10,7 +11,7 @@ const RemoveListMutation = gql`
   }
 `;
 
-export function ListItem({ data }: { data: ImdbList }): JSX.Element {
+export function ListItem({ data }: { data: ImdbList }): React.JSX.Element {
   const [removeList, mutation] = useMutation<
     { removeList: RemoveListPayload },
     { id: string }
@@ -19,12 +20,10 @@ export function ListItem({ data }: { data: ImdbList }): JSX.Element {
     update(cache, r) {
       cache.modify({
         fields: {
-          lists(existing: { __ref: string }[] = []): unknown[] {
-            const ref = cache.identify({
-              __typename: 'ImdbList',
-              id: r.data?.removeList.id,
-            });
-            return existing.filter((x) => x.__ref != ref);
+          lists(existing: readonly Reference[] = [], { readField }) {
+            return existing.filter(
+              (ref) => readField('id', ref) !== r.data?.removeList.id,
+            );
           },
         },
       });

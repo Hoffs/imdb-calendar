@@ -3,9 +3,17 @@ import { GraphQLScalarType } from 'graphql';
 export const dateScalar = new GraphQLScalarType({
   name: 'Date',
   parseValue(value) {
-    return new Date(value);
+    if (typeof value == 'string') {
+      return new Date(value);
+    }
+
+    throw new Error('Value was not String');
   },
   serialize(value) {
-    return value.toISOString();
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+
+    throw new Error('Value was not Date');
   },
 });

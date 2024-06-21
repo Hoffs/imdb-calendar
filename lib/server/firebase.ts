@@ -1,15 +1,25 @@
 import { User, ImdbList } from 'lib/server/types';
-import admin from 'firebase-admin';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getAuth, Auth } from 'firebase-admin/auth';
+import {
+  getFirestore,
+  Firestore,
+  CollectionReference,
+  FieldValue,
+  FirestoreDataConverter,
+  QueryDocumentSnapshot,
+} from 'firebase-admin/firestore';
+import { getStorage, Storage } from 'firebase-admin/storage';
 
 function init() {
-  if (!admin.apps.length) {
+  if (!getApps().length) {
     let privateKey = process.env.FIREBASE_SVC_PRIVATE_KEY;
     if (privateKey) {
       privateKey = privateKey.replace(/\\n/g, '\n');
     }
 
-    admin.initializeApp({
-      credential: admin.credential.cert({
+    return initializeApp({
+      credential: cert({
         projectId: process.env.FIREBASE_SVC_PROJECT_ID,
         clientEmail: process.env.FIREBASE_SVC_CLIENT_EMAIL,
         privateKey: privateKey,
@@ -21,16 +31,14 @@ function init() {
 }
 
 // From https://jamiecurnow.medium.com/using-firestore-with-typescript-65bd2a602945
-const converter = <T>() => ({
-  toFirestore: (data: Partial<T>) => data,
-  fromFirestore: (snap: FirebaseFirestore.QueryDocumentSnapshot) =>
-    snap.data() as T,
+// The types on toFirestore are quite weird, but it does not complain so ???
+const converter = <T>(): FirestoreDataConverter<T> => ({
+  toFirestore: (data: T): Partial<T> => data,
+  fromFirestore: (snap: QueryDocumentSnapshot) => snap.data() as T,
 });
 
-const dataPoint = <T>(
-  fs: FirebaseFirestore.Firestore,
-  collectionPath: string
-) => fs.collection(collectionPath).withConverter(converter<T>());
+const dataPoint = <T>(fs: Firestore, collectionPath: string) =>
+  fs.collection(collectionPath).withConverter(converter<T>());
 
 type UpdatePayload = {
   name?: string;
@@ -41,15 +49,15 @@ type UpdatePayload = {
 };
 
 export class FirebaseDb {
-  public firestore: FirebaseFirestore.Firestore;
-  public storage: admin.storage.Storage;
-  public users: FirebaseFirestore.CollectionReference<User>;
-  public lists: FirebaseFirestore.CollectionReference<ImdbList>;
+  public firestore: Firestore;
+  public storage: Storage;
+  public users: CollectionReference<User>;
+  public lists: CollectionReference<ImdbList>;
 
   constructor() {
     init();
-    this.firestore = admin.firestore();
-    this.storage = admin.storage();
+    this.firestore = getFirestore();
+    this.storage = getStorage();
     this.users = dataPoint<User>(this.firestore, 'users');
     this.lists = dataPoint<ImdbList>(this.firestore, 'imdb_lists');
   }
@@ -77,7 +85,7 @@ export class FirebaseDb {
   async addImdbListToUser(
     email: string,
     listId: string,
-    isWatchlist: boolean
+    isWatchlist: boolean,
   ): Promise<void> {
     await this.getUser(email);
 
@@ -85,7 +93,7 @@ export class FirebaseDb {
 
     const userRef = this.users.doc(email);
     batch.update(userRef, {
-      imdb_lists: admin.firestore.FieldValue.arrayUnion(listId),
+      imdb_lists: FieldValue.arrayUnion(listId),
     });
 
     const listRef = this.lists.doc(listId);
@@ -96,7 +104,7 @@ export class FirebaseDb {
     });
 
     batch.update(listRef, {
-      users: admin.firestore.FieldValue.arrayUnion(email),
+      users: FieldValue.arrayUnion(email),
     });
 
     await batch.commit();
@@ -107,12 +115,12 @@ export class FirebaseDb {
 
     const userRef = this.users.doc(email);
     batch.update(userRef, {
-      imdb_lists: admin.firestore.FieldValue.arrayRemove(listId),
+      imdb_lists: FieldValue.arrayRemove(listId),
     });
 
     const listRef = this.lists.doc(listId);
     batch.update(listRef, {
-      users: admin.firestore.FieldValue.arrayRemove(email),
+      users: FieldValue.arrayRemove(email),
     });
 
     await batch.commit();
@@ -125,7 +133,7 @@ export class FirebaseDb {
 
   updateImdbList = async (
     listId: string,
-    payload: UpdatePayload
+    payload: UpdatePayload,
   ): Promise<void> => {
     await this.lists.doc(listId).update(payload);
   };
@@ -145,7 +153,7 @@ export class FirebaseDb {
   }
 }
 
-export const auth = (): admin.auth.Auth => {
+export const auth = (): Auth => {
   init();
-  return admin.auth();
+  return getAuth();
 };

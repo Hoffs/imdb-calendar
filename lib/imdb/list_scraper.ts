@@ -10,7 +10,7 @@ function parseList(pageText: string): { name: string; item_ids: string[] } {
     const end = pageText.indexOf(listLookupEnd, pos);
     if (end !== -1) {
       const content = JSON.parse(
-        pageText.substring(pos + listLookup.length, end)
+        pageText.substring(pos + listLookup.length, end),
       );
 
       const name = content.name;

@@ -1,4 +1,4 @@
-import { gql, useMutation } from '@apollo/client';
+import { Reference, gql, useMutation } from '@apollo/client';
 import { AddListPayload } from 'lib/graphql/types';
 import { useState } from 'react';
 import tw from 'twin.macro';
@@ -29,16 +29,23 @@ export function ListInputBox(): JSX.Element {
     update(cache, r) {
       cache.modify({
         fields: {
-          lists(existing: { __ref: string }[] = []) {
-            const listRef = cache.identify({
+          lists(
+            existing: readonly Reference[] = [],
+            { toReference },
+          ): Reference[] {
+            const listRef = toReference({
               __typename: 'ImdbList',
               id: r.data?.addList.list.id,
             });
-            if (existing.some((x) => x.__ref == listRef)) {
-              return existing;
+
+            if (
+              listRef === undefined ||
+              existing.some((ref) => ref.__ref === listRef.__ref)
+            ) {
+              return [...existing];
             }
 
-            return [...existing, { __ref: listRef }];
+            return [...existing, listRef];
           },
         },
       });

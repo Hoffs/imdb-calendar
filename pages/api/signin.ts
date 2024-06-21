@@ -12,7 +12,7 @@ const EXPIRES = 7 * 24 * 60 * 60 * 1000;
 async function handler(
   logger: CtxLogger,
   req: NextApiRequest,
-  res: NextApiResponse<Error>
+  res: NextApiResponse<Error>,
 ): Promise<void> {
   updateStore({ initiator: '/api/signin' });
   logger.info('received signin request');
@@ -31,13 +31,13 @@ async function handler(
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'strict',
           path: '/',
-        })
+        }),
       );
 
       res.status(200).end();
     } catch (error) {
       logger.errorCtx({ err: error }, 'failed to create session cookie');
-      res.status(401).json({ error });
+      res.status(401).json({ error: String(error) });
     }
 
     return;
