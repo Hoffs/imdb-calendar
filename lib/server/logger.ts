@@ -1,7 +1,7 @@
 import bunyan from 'bunyan';
 import { LoggingBunyan } from '@google-cloud/logging-bunyan';
 import { AsyncLocalStorage } from 'async_hooks';
-import uniqid from 'uniqid';
+import { randomUUID } from 'crypto';
 import { UserError } from 'lib/graphql/user_error';
 import { GetServerSideProps, NextApiRequest, NextApiResponse } from 'next';
 import { GqlContext } from 'lib/graphql/resolvers';
@@ -91,7 +91,7 @@ process.on('unhandledRejection', (error) => {
 
 export const newStoreCtx = (init?: LabelsCtx): LabelsCtx => {
   init ??= {};
-  init.log_id = uniqid();
+  init.log_id = randomUUID();
   return init;
 };
 
