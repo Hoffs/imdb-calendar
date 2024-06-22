@@ -129,12 +129,11 @@ async function getListData(
 ): Promise<ImdbListData> {
   const apollo = getApollo();
 
-  // eslint-disable-next-line prefer-const
   let {
     data: {
       list: {
-        name: { originalText: name },
-        titleListItemSearch: { total: titleTotal },
+        name: { originalText: name }, // eslint-disable-line prefer-const
+        titleListItemSearch: { total: titleTotal }, // eslint-disable-line prefer-const
         titleListItemSearch: page,
       },
     },
