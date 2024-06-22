@@ -22,7 +22,7 @@ const QueryImpl = {
   async lists(
     _parent: unknown,
     _args: unknown,
-    { user: { email }, logger, db }: GqlContext
+    { user: { email }, logger, db }: GqlContext,
   ): Promise<ImdbList[]> {
     logger.info(`getting user lists`);
     const user = await db.getUser(email);
@@ -39,7 +39,7 @@ const QueryImpl = {
           id: encodeImdbListId(id),
           imdb_id: id,
         };
-      }
+      },
     );
 
     const results = await Promise.allSettled(promises);
@@ -56,7 +56,7 @@ const MutationImpl = {
   async addList(
     _parent: unknown,
     { input }: { input: { url: string } },
-    { user: { email }, logger, db }: GqlContext
+    { user: { email }, logger, db }: GqlContext,
   ): Promise<AddListPayload> {
     updateStore({ list_url: input.url });
     logger.info(`adding list to user`);
@@ -110,7 +110,7 @@ const MutationImpl = {
   async removeList(
     _parent: unknown,
     { input }: { input: { id: string } },
-    { user: { email }, logger, db }: GqlContext
+    { user: { email }, logger, db }: GqlContext,
   ): Promise<RemoveListPayload> {
     logger.info(`removing list from user`);
 

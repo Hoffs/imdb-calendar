@@ -35,3 +35,11 @@ yarn-error.log*
 
 *firebase-adminsdk*
 *firebase-app*
+
+# yarn stuff
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+.pnp.*
+
+tsconfig.tsbuildinfo

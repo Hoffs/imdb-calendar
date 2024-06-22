@@ -1,6 +1,12 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import firebase from 'lib/client/firebase';
+import { auth } from 'lib/client/firebase';
+import {
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
+} from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
 
 async function singInUsingEmail(email: string): Promise<string | undefined> {
   const actionCodeSettings = {
@@ -8,11 +14,15 @@ async function singInUsingEmail(email: string): Promise<string | undefined> {
     handleCodeInApp: true,
   };
   try {
-    await firebase.auth().sendSignInLinkToEmail(email, actionCodeSettings);
+    await sendSignInLinkToEmail(auth, email, actionCodeSettings);
     window.localStorage.setItem('emailForSignIn', email);
     return undefined;
   } catch (err) {
-    return `${err.code}: ${err.message}`;
+    if (err instanceof FirebaseError) {
+      return `${err.code}: ${err.message}`;
+    }
+
+    return 'Unknown error';
   }
 }
 
@@ -35,14 +45,14 @@ async function signInLocally(token: string): Promise<string | undefined> {
 
 export const useSignInUsingEmail = (): [
   boolean,
-  (email: string) => Promise<string | undefined>
+  (email: string) => Promise<string | undefined>,
 ] => {
   const [inProgress, setInProgress] = useState<boolean>(false);
   const router = useRouter();
 
   // useEffect to wait for client to load
   useEffect(() => {
-    if (firebase.auth().isSignInWithEmailLink(window.location.href)) {
+    if (isSignInWithEmailLink(auth, window.location.href)) {
       let email = window.localStorage.getItem('emailForSignIn');
       window.localStorage.removeItem('emailForSignIn');
       if (!email) {
@@ -51,9 +61,7 @@ export const useSignInUsingEmail = (): [
 
       if (email) {
         setInProgress(true);
-        firebase
-          .auth()
-          .signInWithEmailLink(email, window.location.href)
+        signInWithEmailLink(auth, email, window.location.href)
           .then((result) => {
             if (!result.user) {
               throw new Error('failed to get firebase user');
@@ -73,7 +81,7 @@ export const useSignInUsingEmail = (): [
         // NOTE: Without timeout it sometimes does not replace.
         setTimeout(
           () => window.history.replaceState({}, '', window.location.pathname),
-          10
+          10,
         );
       }
     }

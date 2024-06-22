@@ -5,7 +5,7 @@ import { PropsWithChildren } from 'react';
 
 const LayoutEl = tw.div`flex flex-col items-center gap-4 mt-12 font-sans`;
 export default function Layout(
-  e: PropsWithChildren<Record<string, unknown>>
+  e: PropsWithChildren<Record<string, unknown>>,
 ): JSX.Element {
   return (
     <LayoutEl>

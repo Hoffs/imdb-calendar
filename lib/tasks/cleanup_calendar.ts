@@ -5,7 +5,7 @@ export async function cleanupCalendar(
   id: string,
   ts: FirebaseFirestore.Timestamp,
   logger: CtxLogger,
-  db: FirebaseDb
+  db: FirebaseDb,
 ): Promise<void> {
   logger.info('deleting calendar');
   const docRef = db.lists.doc(id);

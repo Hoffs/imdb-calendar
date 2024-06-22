@@ -50,9 +50,7 @@ function Home(): JSX.Element {
 
         <ListInputBox />
 
-        {q.data?.lists.map((x) => (
-          <ListItem key={x.id} data={x} />
-        ))}
+        {q.data?.lists.map((x) => <ListItem key={x.id} data={x} />)}
       </main>
     </Layout>
   );

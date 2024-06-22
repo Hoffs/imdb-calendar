@@ -12,9 +12,10 @@ const HEADERS = {
 
 export async function updateTmdbIds(
   list: ImdbList,
-  logger: CtxLogger
+  logger: CtxLogger,
 ): Promise<void> {
   const toCheck = Object.keys(list.item_ids).filter((id) => !list.item_ids[id]);
+  logger.infoCtx({ idsToCheck: toCheck.length }, 'getting TMDB ids');
   for (const id of toCheck) {
     if (!id) {
       continue;
@@ -22,14 +23,14 @@ export async function updateTmdbIds(
 
     const r = await fetch(
       `${API}/find/${id}?language=en-US&external_source=imdb_id`,
-      HEADERS
+      HEADERS,
     );
 
     if (!r.ok) {
       const text = await r.text();
       logger.errorCtx(
         { status_code: r.status.toString(), url: r.url, response_text: text },
-        'failed to retrieve TMDB find response'
+        'failed to retrieve TMDB find response',
       );
       continue;
     }
@@ -48,7 +49,7 @@ export async function updateTmdbIds(
 export function getDetails(
   id: string,
   imdbId: string,
-  logger: CtxLogger
+  logger: CtxLogger,
 ): Promise<CalendarEntry[]> {
   const [type, tmdb_id] = id.split(':', 2);
   if (type === 'movie') {
@@ -63,7 +64,7 @@ export function getDetails(
 async function getMovieDetails(
   id: string,
   imdbId: string,
-  logger: CtxLogger
+  logger: CtxLogger,
 ): Promise<CalendarEntry[]> {
   const r = await fetch(`${API}/movie/${id}`, HEADERS);
 
@@ -71,7 +72,7 @@ async function getMovieDetails(
     const text = await r.text();
     logger.errorCtx(
       { status_code: r.status.toString(), url: r.url, response_text: text },
-      'failed to retrieve TMDB movie details'
+      'failed to retrieve TMDB movie details',
     );
     return [];
   }
@@ -98,7 +99,7 @@ async function getMovieDetails(
 async function getTvDetails(
   id: string,
   imdbId: string,
-  logger: CtxLogger
+  logger: CtxLogger,
 ): Promise<CalendarEntry[]> {
   const r = await fetch(`${API}/tv/${id}`, HEADERS);
 
@@ -106,7 +107,7 @@ async function getTvDetails(
     const text = await r.text();
     logger.errorCtx(
       { status_code: r.status.toString(), url: r.url, response_text: text },
-      'failed to retrieve TMDB movie details'
+      'failed to retrieve TMDB movie details',
     );
     return [];
   }
@@ -118,7 +119,7 @@ async function getTvDetails(
   if (!tvSeasons || !Array.isArray(tvSeasons)) {
     logger.errorCtx(
       { url: r.url, response_json: tvJson },
-      'received TMDB tv JSON without seasons'
+      'received TMDB tv JSON without seasons',
     );
     return [];
   }
@@ -130,7 +131,7 @@ async function getTvDetails(
     if (typeof seasonNumber !== 'number') {
       logger.errorCtx(
         { url: r.url, response_json: tvJson },
-        'received TMDB tv JSON without season number'
+        'received TMDB tv JSON without season number',
       );
       continue;
     }
@@ -140,7 +141,7 @@ async function getTvDetails(
       seasonNumber,
       tvName,
       imdbId,
-      logger
+      logger,
     );
     entries.push(...seasonEps);
   }
@@ -153,7 +154,7 @@ async function getTvSeasonDetails(
   seasonNumber: number,
   tvName: string,
   imdbId: string,
-  logger: CtxLogger
+  logger: CtxLogger,
 ): Promise<CalendarEntry[]> {
   const r = await fetch(`${API}/tv/${id}/season/${seasonNumber}`, HEADERS);
 
@@ -161,7 +162,7 @@ async function getTvSeasonDetails(
     const text = await r.text();
     logger.errorCtx(
       { status_code: r.status.toString(), url: r.url, response_text: text },
-      'failed to retrieve TMDB movie details'
+      'failed to retrieve TMDB movie details',
     );
     return [];
   }
@@ -171,7 +172,7 @@ async function getTvSeasonDetails(
   if (!eps || !Array.isArray(eps)) {
     logger.errorCtx(
       { url: r.url, response_json: json },
-      'received TMDB tv season JSON without episodes'
+      'received TMDB tv season JSON without episodes',
     );
     return [];
   }

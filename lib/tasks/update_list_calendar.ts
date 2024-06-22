@@ -1,32 +1,49 @@
-import Scraper from 'lib/imdb/scraper';
 import { ImdbList } from 'lib/server/types';
 import { FirebaseDb } from 'lib/server/firebase';
 import { getDetails, updateTmdbIds } from 'lib/imdb/tmdb';
 import { buildCalendar } from 'lib/calendar/builder';
 import { CtxLogger } from 'lib/server/logger';
+import { getTitleList, getWatchList } from 'lib/server/imdb-graphql';
 
 export async function updateCalendar(
   id: string,
   list: ImdbList,
   logger: CtxLogger,
-  db: FirebaseDb
+  db: FirebaseDb,
 ): Promise<void> {
   logger.info('updating calendar');
-  const { name, item_ids } = await Scraper.scrape(id, list, logger);
 
-  list.name = name;
-  list.item_ids = item_ids;
+  const listData = list.is_watchlist
+    ? await getWatchList(id)
+    : await getTitleList(id);
+
+  logger.infoCtx(
+    { listName: listData.name, listTotal: listData.total },
+    'got response',
+  );
+
+  const newList: { [key: string]: string } = {};
+  for (const id of listData.title_ids) {
+    newList[id] = list.item_ids[id] || ''; // If it exists, we get TMDB id, if not, it remains empty.
+  }
+
+  list.name = listData.name;
+  list.item_ids = newList;
 
   await db.updateImdbList(id, {
     name: list.name,
     item_ids: list.item_ids,
   });
 
+  logger.info('updating list with TMDB ids');
+
   await updateTmdbIds(list, logger);
 
   await db.updateImdbList(id, {
     item_ids: list.item_ids,
   });
+
+  logger.info('getting details about list items');
 
   const entries = [];
   for (const id of Object.keys(list.item_ids)) {
@@ -35,13 +52,14 @@ export async function updateCalendar(
       continue;
     }
 
+    // TODO(improvement): It would be nice to cache details, at least for lifetime of update task
     const idEntries = await getDetails(tmdbId, id, logger);
     entries.push(...idEntries);
   }
 
   logger.infoCtx(
     { entries_count: entries.length.toString() },
-    'creating calendar'
+    'creating calendar',
   );
 
   const cal = buildCalendar(list.name, entries);
@@ -64,5 +82,5 @@ export async function updateCalendar(
     url: list.url,
   });
 
-  logger.info('updated calendar');
+  logger.infoCtx({ url: list.url }, 'updated calendar');
 }

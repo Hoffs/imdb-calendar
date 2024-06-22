@@ -1,4 +1,6 @@
-import { ApolloServer, makeExecutableSchema } from 'apollo-server-micro';
+import { ApolloServer } from '@apollo/server';
+import { startServerAndCreateNextHandler } from '@as-integrations/next';
+import { makeExecutableSchema } from '@graphql-tools/schema';
 import { typeDefs } from 'lib/graphql/typedefs';
 import resolvers, { GqlContext } from 'lib/graphql/resolvers';
 import { ensureSession } from 'lib/server/firebase_auth';
@@ -7,15 +9,12 @@ import { FirebaseDb } from 'lib/server/firebase';
 
 export const schema = makeExecutableSchema({ typeDefs, resolvers });
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-export default new ApolloServer({
+const server = new ApolloServer({
   schema,
-  context: async ({ req }): Promise<GqlContext> => {
+});
+
+export default startServerAndCreateNextHandler(server, {
+  context: async (req, _res): Promise<GqlContext> => {
     if (req?.cookies && typeof req?.cookies === 'object') {
       const user = await ensureSession(req);
       if (!user) {
@@ -35,6 +34,4 @@ export default new ApolloServer({
       throw new Error('Not authorized');
     }
   },
-}).createHandler({
-  path: '/api/graphql',
 });

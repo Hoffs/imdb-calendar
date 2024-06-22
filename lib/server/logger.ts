@@ -24,7 +24,7 @@ function initLogger(): bunyan {
   loggerInstance = bunyan.createLogger({
     name: 'imdb-calendar',
     streams: [
-      { stream: process.stdout, level: 'error' },
+      { stream: process.stdout, level: 'info' },
       loggingBunyan.stream('info'),
     ],
   });
@@ -56,7 +56,8 @@ export type LogCtx = RootCtx & {
 };
 
 export type RootCtx = {
-  [key: string]: string | Record<string, unknown> | undefined;
+  err?: unknown;
+  [key: string]: string | Record<string, unknown> | undefined | unknown;
 };
 
 export type LabelsCtx = {
@@ -84,7 +85,7 @@ export const updateStore = (ctx: LabelsCtx): void => {
 process.on('unhandledRejection', (error) => {
   logger().error(
     { labels: { ...store.getStore() }, error: String(error) },
-    'unhandled rejection'
+    'unhandled rejection',
   );
 });
 
@@ -105,7 +106,7 @@ export class CtxLogger {
     this.logger.error(CtxLogger.makeCtx(), message);
   }
 
-  errorCtx(ctx: RootCtx, message: string): void {
+  errorCtx(ctx: RootCtx, message?: string): void {
     this.logger.error(CtxLogger.makeCtx(ctx), message);
   }
 
@@ -136,14 +137,14 @@ export class CtxLogger {
 export const runWithCtx = <T>(
   logger: CtxLogger,
   ctx: LabelsCtx,
-  fn: () => Promise<T>
+  fn: () => Promise<T>,
 ): Promise<T> => {
   return store.run(ctx, async () => {
     try {
       return await fn();
     } catch (err) {
       if (!(err instanceof UserError)) {
-        logger.errorCtx({ err: err }, err.message);
+        logger.errorCtx({ err: err });
       }
 
       throw err;
@@ -155,11 +156,11 @@ export const runWithCtx = <T>(
 type NextApiExtendedFn<T> = (
   logger: CtxLogger,
   req: NextApiRequest,
-  res: NextApiResponse<T>
+  res: NextApiResponse<T>,
 ) => Promise<void>;
 type NextApiFn<T> = (
   req: NextApiRequest,
-  res: NextApiResponse<T>
+  res: NextApiResponse<T>,
 ) => Promise<void>;
 
 export function withCtx<T>(handler: NextApiExtendedFn<T>): NextApiFn<T> {
@@ -171,7 +172,7 @@ export function withCtx<T>(handler: NextApiExtendedFn<T>): NextApiFn<T> {
         await handler(log, req, res);
       } catch (err) {
         if (!(err instanceof UserError)) {
-          log.errorCtx({ err: err }, err.message);
+          log.errorCtx({ err: err });
         }
 
         throw err;
@@ -184,12 +185,12 @@ export function withCtx<T>(handler: NextApiExtendedFn<T>): NextApiFn<T> {
 type GraphqlFn<TIn, TOut> = (
   _parent: unknown,
   input: TIn,
-  gqlCtx: GqlContext
+  gqlCtx: GqlContext,
 ) => Promise<TOut>;
 
 export function withCtxGql<TIn, TOut>(
   name: string,
-  handler: GraphqlFn<TIn, TOut>
+  handler: GraphqlFn<TIn, TOut>,
 ): GraphqlFn<TIn, TOut> {
   const wrapped: GraphqlFn<TIn, TOut> = (p, input, gqlCtx) => {
     return runWithCtx(
@@ -197,7 +198,7 @@ export function withCtxGql<TIn, TOut>(
       newStoreCtx({ initiator: `graphql#${name}`, uid: gqlCtx.user.uid }),
       async () => {
         return await handler(p, input, gqlCtx);
-      }
+      },
     );
   };
 
@@ -219,12 +220,12 @@ export function withCtxPage(fn: GetServerSideProps): GetServerSideProps {
           return await fn(context);
         } catch (err) {
           if (!(err instanceof UserError)) {
-            log.errorCtx({ err: err }, err.message);
+            log.errorCtx({ err: err });
           }
 
           throw err;
         }
-      }
+      },
     );
   };
 }
