@@ -24,7 +24,7 @@ function initLogger(): bunyan {
   loggerInstance = bunyan.createLogger({
     name: 'imdb-calendar',
     streams: [
-      { stream: process.stdout, level: 'error' },
+      { stream: process.stdout, level: 'info' },
       loggingBunyan.stream('info'),
     ],
   });

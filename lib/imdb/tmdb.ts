@@ -15,6 +15,7 @@ export async function updateTmdbIds(
   logger: CtxLogger,
 ): Promise<void> {
   const toCheck = Object.keys(list.item_ids).filter((id) => !list.item_ids[id]);
+  logger.infoCtx({ idsToCheck: toCheck.length }, 'getting TMDB ids');
   for (const id of toCheck) {
     if (!id) {
       continue;
