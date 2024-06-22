@@ -1,19 +1,15 @@
 # https://github.com/vercel/next.js/blob/canary/examples/with-docker/Dockerfile
 # Install dependencies only when needed
-FROM node:14-alpine AS deps
+FROM node:20-alpine AS deps
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN yarn import
-RUN rm package-lock.json
-RUN yarn install --force --frozen-lockfile
 
-# Rebuild the source code only when needed
-FROM node:14-alpine AS builder
-WORKDIR /app
+COPY .yarn ./.yarn
+COPY .yarnrc.yml package.json yarn.lock* ./
+RUN yarn install --immutable
+
 COPY . .
-COPY --from=deps /app/node_modules ./node_modules
 
 # These are required during build process (SVC could be removed if admin wasnt initalized as global/singleton I imagine)
 ARG NEXT_PUBLIC_FIREBASE_APP_ID
@@ -24,20 +20,18 @@ ARG NEXT_PUBLIC_FIREBASE_API_KEY
 RUN yarn build
 
 # Production image, copy all the files and run next
-FROM node:14-alpine AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
 
 RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
+RUN adduser -u 1001 -S nextjs
 
-# You only need to copy next.config.js if you are NOT using the default configuration
-# COPY --from=builder /app/next.config.js ./
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
+COPY --from=deps --chown=nextjs:nodejs /app/.next/standalone .
+COPY --from=deps --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY ./public ./public
 
 USER nextjs
 
@@ -48,4 +42,4 @@ EXPOSE 3000
 # Uncomment the following line in case you want to disable telemetry.
 # ENV NEXT_TELEMETRY_DISABLED 1
 
-CMD ["yarn", "start"]
+CMD ["node", "server.js"]

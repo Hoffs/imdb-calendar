@@ -37,9 +37,12 @@ yarn-error.log*
 *firebase-app*
 
 # yarn stuff
-.yarn/*
-!.yarn/releases
-!.yarn/plugins
 .pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
 
 tsconfig.tsbuildinfo
