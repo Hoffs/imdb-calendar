@@ -12,9 +12,9 @@ Utilizes Firebase as a database (Firestore), file storage and authentication pro
 
 Once authenticated user is able to add IMDB lists or watchlists, which are verified and if valid, added to the Firestore.
 
-Periodically special API endpoint is called to update all stored lists. If list has 0 users assigned - list and iCal are deleted. Otherwise, list page is retrieved, IMDB ID's are parsed out of the page content, TMDB API is used to find TMDB equivelent ID's. Using TMDB ID's release dates for movies and air dates for TV shows are retrieved. After that iCal is generated and stored in Firebase.
+Periodically special API endpoint is called to update all stored lists. If list has 0 users assigned - list and iCal are deleted. Otherwise, IMDB ID's from the list are taken and using TMDB API, TMDB equivelent ID's are saved. Using TMDB ID's release dates for movies and air dates for TV shows are retrieved. After that iCal is generated and stored in Firestore.
 
-External CRON (or similar) service has to be used to call Tasks API with secret token.
+External tool (CRON or similar) has to be used to call Tasks API with the secret token.
 
 ## Data Structure
 
